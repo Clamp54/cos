@@ -1,0 +1,96 @@
+#include <cstdio>
+#include <mpi.h>
+
+using namespace std;
+
+int main(int argc, char* argv[]) {
+    int rank, size, len, partner;
+    char hostname[MPI_MAX_PROCESSOR_NAME];
+    int send_val, recv_val;
+    
+    MPI_Status stats[2];
+    MPI_Request reqs[2];
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Get_processor_name(hostname, &len);
+
+    if (size % 2 != 0 || size <= 0) {
+        if (rank == 0) {
+            printf("Błąd: Liczba zadań musi być parzysta.\n");
+        }
+        MPI_Finalize();
+        return 0;
+    }
+
+    if (rank < size / 2) {
+        partner = size / 2 + rank;
+    } else {
+        partner = rank - size / 2;
+    }
+
+    send_val = rank;
+
+    MPI_Irecv(&recv_val, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqs[0]);
+    MPI_Isend(&send_val, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqs[1]);
+
+    MPI_Waitall(2, reqs, stats);
+
+    printf("Zadanie %d jest partnerem z %d\n", rank, partner);
+
+    MPI_Finalize();
+    return 0;
+}
+
+//////
+
+#include <cstdio>
+#include <mpi.h>
+
+using namespace std;
+
+int main(int argc, char* argv[]) {
+    int rank, size, len, partner;
+    char hostname[MPI_MAX_PROCESSOR_NAME];
+    int send_buffer, recv_buffer;
+    
+    MPI_Status stats[2];
+    MPI_Request reqs[2];
+
+    MPI_Init(&argc, &argv); [cite: 11, 20]
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank); [cite: 12, 22]
+    MPI_Comm_size(MPI_COMM_WORLD, &size); [cite: 14, 23]
+    MPI_Get_processor_name(hostname, &len); [cite: 12, 24]
+
+    if (size % 2 != 0 || size <= 0) { [cite: 52]
+        if (rank == 0) {
+            printf("Zbyt mała liczba zadań lub liczba nieparzysta. Zakończenie pracy.\n"); [cite: 52]
+        }
+        MPI_Finalize(); [cite: 15, 21]
+        return 0;
+    }
+
+    if (rank == 0) {
+        printf("Master: Number of MPI tasks is: %d\n", size); [cite: 53]
+    }
+    printf("Hello from task %d on %s\n", rank, hostname); [cite: 53]
+
+    if (rank < size / 2) { [cite: 55, 125]
+        partner = size / 2 + rank;
+    } else { [cite: 56, 125]
+        partner = rank - size / 2;
+    }
+
+    send_buffer = rank; [cite: 57]
+
+    MPI_Irecv(&recv_buffer, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqs[0]); [cite: 125, 150]
+    MPI_Isend(&send_buffer, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqs[1]); [cite: 125, 135]
+
+    MPI_Waitall(2, reqs, stats); [cite: 126, 179]
+
+    printf("Zadanie %d jest partnerem z %d, wiadomość, którą otrzymałem to %d\n", rank, partner, recv_buffer); [cite: 127]
+
+    MPI_Finalize(); [cite: 15, 21]
+    return 0;
+}
