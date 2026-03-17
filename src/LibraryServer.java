@@ -15,14 +15,14 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
 
     public synchronized void addBook(String author, String title, String date, String content) {
         books.add(new Book(nextId++, author, title, date, content));
-        System.out.println("Dodano ksiazke");
+        System.out.println(author + " dodal ksiazke " + title);
     }
 
     public synchronized boolean lockBook(int id, String writer) {
         for (Book b : books) {
             if (b.id == id && b.author.equals(writer)) {
                 b.locked = true;
-                System.out.println("Zablokowano ksiazke");
+                System.out.println(writer + " zablokowal ksiazke " + id);
                 return true;
             }
         }
@@ -37,8 +37,9 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
     }
 
     public synchronized void destroyBook(int id, String writer) {
-        books.removeIf(b -> b.id == id && b.author.equals(writer) && b.locked && b.readers.isEmpty());
-        System.out.println("Usunieto ksiazke");
+        if (books.removeIf(b -> b.id == id && b.author.equals(writer) && b.locked && b.readers.isEmpty())) {
+            System.out.println(writer + " usunal ksiazke " + id);
+        }
     }
 
     public synchronized void updateBook(int id, String content, String writer) {
@@ -46,7 +47,7 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
             if (b.id == id && b.author.equals(writer) && b.locked && b.readers.isEmpty()) {
                 b.content = content;
                 b.locked = false;
-                System.out.println("Zaktualizowano ksiazke");
+                System.out.println(writer + " zaktualizowal ksiazke " + id);
             }
         }
     }
@@ -62,7 +63,7 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
         for (Book b : books) {
             if (b.id == id && !b.locked) {
                 b.readers.add(reader);
-                System.out.println("Wypozyczono ksiazke");
+                System.out.println(reader + " wypozyczyl ksiazke " + id);
                 return true;
             }
         }
@@ -73,18 +74,18 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
         for (Book b : books) {
             if (b.id == id) {
                 b.readers.remove(reader);
-                System.out.println("Zwrocono ksiazke");
+                System.out.println(reader + " zwrocil ksiazke " + id);
             }
         }
     }
 
     public synchronized String getReport() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("--- RAPORT ---\n");
         for (Book b : books) {
             sb.append("ID: ").append(b.id)
-                    .append(" Tytul: ").append(b.title)
-                    .append(" Blokada: ").append(b.locked)
-                    .append(" Czytelnicy: ").append(b.readers).append("\n");
+              .append(" | Tytul: ").append(b.title)
+              .append(" | Blokada: ").append(b.locked)
+              .append(" | Czytelnicy: ").append(b.readers).append("\n");
         }
         return sb.toString();
     }
@@ -93,7 +94,7 @@ public class LibraryServer extends UnicastRemoteObject implements ILibrary {
         try {
             Registry registry = LocateRegistry.createRegistry(1099);
             registry.rebind("Library", new LibraryServer());
-            System.out.println("Serwer uruchomiony");
+            System.out.println("Serwer gotowy");
         } catch (Exception e) {
             e.printStackTrace();
         }
